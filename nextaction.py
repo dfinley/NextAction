@@ -14,6 +14,9 @@ API_TOKEN = 'API TOKEN HERE'
 NEXT_ACTION_LABEL = u'nextAction'
 WAITING_LABEL = u'waiting'
 FUTURE_LABEL = u'future'
+SOMEDAY_LABEL = "Someday"
+
+LIST_PREFIX = 'List - '
 SEQUENTIAL_POSTFIX = u'--'
 PARALLEL_POSTFIX = u'='
 # Will remove next_action label within projects with skip_postfix. For tasks set @waiting label to skip next_action label on subtasks
@@ -126,7 +129,7 @@ class Item(object):
   # Tasks are be default sequential, hence say its sequential if task name does not end in =
   def IsSequential(self):
     return not self.content.endswith(PARALLEL_POSTFIX)
-    #if self.content.endswith(SEQUENTIAL_POSTFIX) or self.content.endswith('='):
+    #if self.content.endswith(SEQUENTIAL_POSTFIX) or self.content.endswith(PARALLEL_POSTFIX):
     #  return self.content.endswith(SEQUENTIAL_POSTFIX)
     #else:
     #  return self.parent.IsSequential()
@@ -184,18 +187,13 @@ class Project(object):
     return self._subProjects
     
   def IsIgnored(self):
-    return self.name.endswith(SKIP_POSTFIX) or self.name.startswith('List - ')
+    return self.name.endswith(SKIP_POSTFIX) or self.name.startswith(LIST_PREFIX) or (self.name == SOMEDAY_LABEL)
 
   def IsSequential(self):
     ignored = self.IsIgnored()
     endsWithSequential = self.name.endswith(SEQUENTIAL_POSTFIX)
     validParent = self.parent == None or not self.parent.IsIgnored()
     seq = ((not ignored) and (not endsWithSequential)) and validParent
-    # if self.name .startsWith('Payer Camille'):
-#       print startsWithKeyword
-#       print endsWithEqual
-#       print parentSequential
-#       print seq
     return seq
 
   def IsParallel(self):
@@ -261,6 +259,7 @@ class TodoistData(object):
     self._labels_timestamp = label_data['DayOrdersTimestamp']
     self._next_action_id = None
     self._waiting_id = None
+    self._future_id = None
     for label in label_data['Labels'].values():
       if label['name'] == NEXT_ACTION_LABEL:
         self._next_action_id = label['id']
